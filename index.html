@@ -19,15 +19,54 @@
       box-shadow:0 6px 18px rgba(0,0,0,0.08);
       cursor:pointer;
       transition:transform .18s ease, box-shadow .18s ease;
+      will-change:transform;
     }
     .card:active{transform:translateY(3px)}
+    /* subtle scale + shadow on hover */
     .card:hover{
       transform:scale(1.05);
       box-shadow:0 14px 35px rgba(0,0,0,0.16);
     }
-    .letter{font-size:2.1rem;font-weight:800;color:#ff7a59}
-    .emoji{font-size:2.4rem;margin:10px 0}
-    .word{font-size:1.05rem;margin-top:6px;color:#333}
+
+    /* colorful light overlay */
+    .card::before{
+      content:"";
+      position:absolute;
+      left:-30%;
+      top:-40%;
+      width:160%;
+      height:180%;
+      background: radial-gradient(closest-side at 20% 20%, rgba(255,122,89,0.14), transparent 12%),
+                  radial-gradient(closest-side at 80% 80%, rgba(255,183,77,0.12), transparent 14%),
+                  radial-gradient(closest-side at 50% 10%, rgba(123,104,238,0.08), transparent 12%);
+      opacity:0;
+      transform:scale(0.98) rotate(0deg);
+      transition:opacity .28s ease, transform .9s cubic-bezier(.2,.9,.2,1);
+      pointer-events:none;
+      filter:blur(8px);
+    }
+
+    /* glow appears on hover / active */
+    .card.hover-light::before,
+    .card:focus::before{
+      opacity:1;
+      transform:scale(1.02) rotate(8deg);
+    }
+
+    /* gentle shifting animation of colors */
+    @keyframes hueShift {
+      0%{filter:blur(8px) hue-rotate(0deg)}
+      50%{filter:blur(10px) hue-rotate(18deg)}
+      100%{filter:blur(8px) hue-rotate(0deg)}
+    }
+    .card.hover-light::before{
+      animation: hueShift 3.6s ease-in-out infinite;
+    }
+
+    .letter{font-size:2.1rem;font-weight:800;color:#ff7a59;z-index:2;position:relative}
+    .emoji{font-size:2.4rem;margin:10px 0;z-index:2;position:relative}
+    .word{font-size:1.05rem;margin-top:6px;color:#333;z-index:2;position:relative}
+
     @media (max-width:1000px){.grid{grid-template-columns:repeat(4,1fr)}}
     @media (max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
   </style>
@@ -74,47 +113,63 @@ const grid = document.getElementById('grid');
 function createCard(item){
   const el = document.createElement('div');
   el.className = 'card';
+  el.tabIndex = 0; // keyboard focusable
   el.innerHTML = `
     <div class="letter">${item.l}</div>
     <div class="emoji">${item.emoji}</div>
     <div class="word">${item.en} (${item.hi})</div>
   `;
-  el.addEventListener('click', ()=> playItem(item));
+
+  // hover effect class for mouseenter/mouseleave
+  el.addEventListener('mouseenter', ()=> el.classList.add('hover-light'));
+  el.addEventListener('mouseleave', ()=> el.classList.remove('hover-light'));
+
+  // for accessibility: focus/blur
+  el.addEventListener('focus', ()=> el.classList.add('hover-light'));
+  el.addEventListener('blur', ()=> el.classList.remove('hover-light'));
+
+  // click / touch triggers sound and short visual pulse
+  el.addEventListener('click', ()=>{
+    playItem(item);
+    // brief pulse
+    el.classList.add('pulse');
+    setTimeout(()=> el.classList.remove('pulse'), 300);
+  });
+
+  // mobile: touchstart show effect immediately, touchend remove after short delay
+  el.addEventListener('touchstart', (e)=>{
+    el.classList.add('hover-light');
+  }, {passive:true});
+  el.addEventListener('touchend', ()=>{
+    setTimeout(()=> el.classList.remove('hover-light'), 500);
+  });
+
+  // keyboard: Enter or Space triggers click
+  el.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      el.click();
+    }
+  });
+
   return el;
 }
 
 letters.forEach(it => grid.appendChild(createCard(it)));
 
-function speakText(text, lang, delay=0){
-  setTimeout(()=>{
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = lang;
-    speechSynthesis.speak(utter);
-  }, delay);
+function speakText(text, lang){
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = lang;
+  speechSynthesis.speak(utter);
 }
 
 function playItem(item){
   speechSynthesis.cancel();
-
-  const word = item.en;
-  const letters = word.split("");
-
-  let delay = 0;
-
-  // Step 1: बोले एक-एक अक्षर (spelling)
-  letters.forEach(ch=>{
-    speakText(ch, "en-US", delay);
-    delay += 600; // हर अक्षर के बीच gap
-  });
-
-  // Step 2: पूरा word बोले
-  delay += 500;
-  speakText(word, "en-US", delay);
-
-  // Step 3: हिंदी में मतलब बोले
-  delay += 1200;
-  speakText(`${word} मतलब ${item.hi}`, "hi-IN", delay);
+  speakText(item.en, "en-US");
+  setTimeout(()=>{
+    speakText(`${item.en} मतलब ${item.hi}`, "hi-IN");
+  }, 900);
 }
 </script>
 </body>
-    </html>
+</html>
