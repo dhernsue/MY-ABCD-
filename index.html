@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ABC Phonics - बच्चों के लिए</title>
+  <style>
+    body{font-family:"Noto Sans","Segoe UI",Roboto,Arial;margin:0;background:#fff9f0;color:#222}
+    header{background:linear-gradient(90deg,#ffd54f,#ffb74d);padding:18px;text-align:center;border-bottom:4px solid #ffd54f}
+    header h1{margin:0;font-size:1.5rem}
+    .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:12px;max-width:1100px;margin:0 auto}
+    .card{
+      position:relative;
+      overflow:hidden;
+      background:#fff;
+      border-radius:12px;
+      padding:18px 14px;
+      text-align:center;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08);
+      cursor:pointer;
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+    .card:active{transform:translateY(3px)}
+    .card:hover{
+      transform:scale(1.05);
+      box-shadow:0 14px 35px rgba(0,0,0,0.16);
+    }
+    .letter{font-size:2.1rem;font-weight:800;color:#ff7a59}
+    .emoji{font-size:2.4rem;margin:10px 0}
+    .word{font-size:1.05rem;margin-top:6px;color:#333}
+    @media (max-width:1000px){.grid{grid-template-columns:repeat(4,1fr)}}
+    @media (max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>अक्षर और ध्वनि — A to Z (बच्चों के लिए)</h1>
+  </header>
+
+  <main class="grid" id="grid"></main>
+
+<script>
+const letters = [
+  {l:'A', emoji:'🍎', hi:'सेव', en:'Apple'},
+  {l:'B', emoji:'⚽️', hi:'गेंद', en:'Ball'},
+  {l:'C', emoji:'🐱', hi:'बिल्ली', en:'Cat'},
+  {l:'D', emoji:'🐶', hi:'कुत्ता', en:'Dog'},
+  {l:'E', emoji:'🐘', hi:'हाथी', en:'Elephant'},
+  {l:'F', emoji:'🐟', hi:'मछली', en:'Fish'},
+  {l:'G', emoji:'🍇', hi:'अंगूर', en:'Grapes'},
+  {l:'H', emoji:'🐔', hi:'मुर्गी', en:'Hen'},
+  {l:'I', emoji:'🍨', hi:'आइस-क्रीम', en:'Ice-cream'},
+  {l:'J', emoji:'🫗', hi:'जग', en:'Jug'},
+  {l:'K', emoji:'🪁', hi:'पतंग', en:'Kite'},
+  {l:'L', emoji:'🦁', hi:'शेर', en:'Lion'},
+  {l:'M', emoji:'🐒', hi:'बंदर', en:'Monkey'},
+  {l:'N', emoji:'🪺', hi:'घोंसला', en:'Nest'},
+  {l:'O', emoji:'🍊', hi:'संतरा', en:'Orange'},
+  {l:'P', emoji:'🦚', hi:'मोर', en:'Peacock'},
+  {l:'Q', emoji:'👸', hi:'रानी', en:'Queen'},
+  {l:'R', emoji:'🌹', hi:'गुलाब', en:'Rose'},
+  {l:'S', emoji:'🦢', hi:'हंस', en:'Swan'},
+  {l:'T', emoji:'☎️', hi:'टेलीफोन', en:'Telephone'},
+  {l:'U', emoji:'☂️', hi:'छाता', en:'Umbrella'},
+  {l:'V', emoji:'🚐', hi:'वैन', en:'Van'},
+  {l:'W', emoji:'⌚', hi:'घड़ी', en:'Watch'},
+  {l:'X', emoji:'🎼', hi:'ज़ाइलोफोन', en:'Xylophone'},
+  {l:'Y', emoji:'⛵', hi:'नाव', en:'Yacht'},
+  {l:'Z', emoji:'🦓', hi:'ज़ेब्रा', en:'Zebra'}
+];
+
+const grid = document.getElementById('grid');
+
+function createCard(item){
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="letter">${item.l}</div>
+    <div class="emoji">${item.emoji}</div>
+    <div class="word">${item.en} (${item.hi})</div>
+  `;
+  el.addEventListener('click', ()=> playItem(item));
+  return el;
+}
+
+letters.forEach(it => grid.appendChild(createCard(it)));
+
+function speakText(text, lang, delay=0){
+  setTimeout(()=>{
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = lang;
+    speechSynthesis.speak(utter);
+  }, delay);
+}
+
+function playItem(item){
+  speechSynthesis.cancel();
+
+  const word = item.en;
+  const letters = word.split("");
+
+  let delay = 0;
+
+  // Step 1: बोले एक-एक अक्षर (spelling)
+  letters.forEach(ch=>{
+    speakText(ch, "en-US", delay);
+    delay += 600; // हर अक्षर के बीच gap
+  });
+
+  // Step 2: पूरा word बोले
+  delay += 500;
+  speakText(word, "en-US", delay);
+
+  // Step 3: हिंदी में मतलब बोले
+  delay += 1200;
+  speakText(`${word} मतलब ${item.hi}`, "hi-IN", delay);
+}
+</script>
+</body>
+    </html>
